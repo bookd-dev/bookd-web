@@ -1,9 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { AdminBooksPage } from './AdminBooksPage';
 import { ConfirmProvider } from '../components/ConfirmProvider';
 import { ToastProvider } from '../components/ToastProvider';
-import { bookApi, sourceApi, tagApi } from '../api/bookdApi';
+import { bookApi, sourceApi, tagApi, txtRuleApi } from '../api/bookdApi';
 
 vi.mock('../api/bookdApi', () => ({
   bookApi: {
@@ -25,26 +26,42 @@ vi.mock('../api/bookdApi', () => ({
   },
   tagApi: {
     books: vi.fn(),
-    list: vi.fn()
+    list: vi.fn(),
+    create: vi.fn(),
+    delete: vi.fn(),
+    autoTagAll: vi.fn(),
+    merge: vi.fn()
+  },
+  txtRuleApi: {
+    list: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    toggle: vi.fn(),
+    importJson: vi.fn()
   }
 }));
 
 function renderPage() {
   return render(
-    <ToastProvider>
-      <ConfirmProvider>
-        <AdminBooksPage />
-      </ConfirmProvider>
-    </ToastProvider>
+    <MemoryRouter>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AdminBooksPage />
+        </ConfirmProvider>
+      </ToastProvider>
+    </MemoryRouter>
   );
 }
 
 describe('AdminBooksPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(bookApi.count).mockResolvedValue({ count: 0 });
     vi.mocked(bookApi.list).mockResolvedValue({ books: [], total: 0 });
     vi.mocked(sourceApi.list).mockResolvedValue([]);
     vi.mocked(tagApi.list).mockResolvedValue([]);
+    vi.mocked(txtRuleApi.list).mockResolvedValue([]);
   });
 
   test('resets source form after asynchronous source creation succeeds', async () => {
@@ -71,5 +88,41 @@ describe('AdminBooksPage', () => {
       expect(nameInput).toHaveValue('');
       expect(pathInput).toHaveValue('');
     });
+  });
+
+  test('given many tags when opening book list tab then tag filters collapse and expand', async () => {
+    const user = userEvent.setup();
+    const manyTags = Array.from({ length: 16 }, (_, index) => ({
+      id: index + 1,
+      name: `标签${index + 1}`,
+      bookCount: index,
+      createdAt: '2026-05-25T00:00:00Z'
+    }));
+    vi.mocked(tagApi.list).mockResolvedValue(manyTags);
+
+    renderPage();
+
+    await user.click(screen.getByRole('tab', { name: /书籍列表/ }));
+
+    const tagFilter = await screen.findByTestId('book-list-tag-filter');
+    expect(tagFilter).toHaveClass('collapsed');
+
+    await user.click(await screen.findByRole('button', { name: '展开标签' }));
+
+    expect(tagFilter).toHaveClass('expanded');
+    expect(screen.getByRole('button', { name: '收起标签' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('given book management page when switching subtabs then tags and txt rules render inside it', async () => {
+    const user = userEvent.setup();
+
+    renderPage();
+
+    await user.click(screen.getByRole('tab', { name: /标签管理/ }));
+    expect(await screen.findByRole('heading', { name: '标签管理' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /TXT规则/ }));
+    expect(await screen.findByRole('heading', { name: 'TXT 解析规则' })).toBeInTheDocument();
+    expect(txtRuleApi.list).toHaveBeenCalled();
   });
 });

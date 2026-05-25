@@ -42,9 +42,19 @@ The React admin pages SHALL provide the existing management capabilities from th
 - **WHEN** an admin adds, lists, toggles, deletes, browses folders, or scans sources
 - **THEN** the application SHALL use the matching backend source, filesystem, and scan APIs.
 
+#### Scenario: Admin navigates book management subviews
+- **WHEN** an admin opens `/admin/books`
+- **THEN** the page SHALL expose book source management, book list, tag management, and TXT rule management as subviews under the book management area.
+- **AND** `/admin/tags` and `/admin/txt-rules` SHALL resolve to the matching book management subviews.
+
 #### Scenario: Admin manages books
 - **WHEN** an admin lists, filters, views, edits, uploads cover art, reparses, or views chapters for books
 - **THEN** the application SHALL preserve the backend API behavior and refresh affected views after mutations.
+
+#### Scenario: Admin filters books by many tags
+- **WHEN** the book list renders enough tag filters to exceed the default visible area
+- **THEN** the tag filter list SHALL default to a collapsed state showing no more than three rows.
+- **AND** expanding or collapsing the filter list SHALL keep selected tags unchanged.
 
 #### Scenario: Admin manages metadata helpers
 - **WHEN** an admin manages tags, TXT parse rules, users, invite tokens, or background parsing
@@ -60,3 +70,7 @@ The web app SHALL include focused tests for shared behavior and high-risk admin 
 #### Scenario: Route guard changes
 - **WHEN** auth routing changes
 - **THEN** tests SHALL cover admin and non-admin route decisions.
+
+#### Scenario: Admin book management navigation changes
+- **WHEN** book management subviews or dense book list filters change
+- **THEN** tests SHALL cover subview switching and tag filter collapse or expand behavior.

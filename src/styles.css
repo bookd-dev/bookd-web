@@ -298,6 +298,40 @@ textarea:focus {
   gap: 18px;
 }
 
+.subtab-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.subtab {
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.subtab.active {
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-weight: 700;
+}
+
 .section {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -474,6 +508,28 @@ textarea:focus {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.collapsible-filter {
+  display: grid;
+  gap: 10px;
+}
+
+.tag-filter-grid {
+  align-content: start;
+}
+
+.tag-filter-grid.collapsed {
+  max-height: 112px;
+  overflow: hidden;
+}
+
+.tag-filter-grid.expanded {
+  max-height: none;
+}
+
+.compact-toggle {
+  justify-self: start;
 }
 
 .chip,

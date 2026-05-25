@@ -8,6 +8,14 @@ import { useConfirm } from '../components/ConfirmProvider';
 import { useToast } from '../components/ToastProvider';
 
 export function AdminTagsPage() {
+  return (
+    <main className="page-stack">
+      <TagsManagementSection />
+    </main>
+  );
+}
+
+export function TagsManagementSection() {
   const [tags, setTags] = useState<TagWithStats[] | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
@@ -87,7 +95,7 @@ export function AdminTagsPage() {
   }
 
   return (
-    <main className="page-stack">
+    <>
       <section className="section">
         <div className="section-header">
           <h2>标签管理</h2>
@@ -176,6 +184,6 @@ export function AdminTagsPage() {
           </button>
         </div>
       </Modal>
-    </main>
+    </>
   );
 }

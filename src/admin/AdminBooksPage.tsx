@@ -1,18 +1,23 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpen,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Edit2,
+  FileText,
   Folder,
   FolderOpen,
+  List,
   Plus,
   RefreshCw,
   Save,
   Search,
+  Tags,
   Trash2,
   Upload
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { bookApi, filesystemApi, scanApi, sourceApi, tagApi } from '../api/bookdApi';
 import type { Book, BookSource, ChaptersResponse, DirectoryListResponse, Tag, TagWithStats } from '../api/types';
 import { useConfirm } from '../components/ConfirmProvider';
@@ -21,10 +26,27 @@ import { EmptyState, LoadingState } from '../components/States';
 import { useToast } from '../components/ToastProvider';
 import { formatDateTime, formatFileSize, formatNumber, formatRelativeBookTime } from '../utils/format';
 import { buildMetadataUpdate, filterBooksBySource, mergeBooksFromTagResults, type TagFilterMode } from './bookAdminUtils';
+import { TagsManagementSection } from './AdminTagsPage';
+import { TxtRulesManagementSection } from './AdminTxtRulesPage';
 
 type ScanTarget = { kind: 'all' } | { kind: 'source'; sourceId: number };
+type BooksAdminTab = 'management' | 'list' | 'tags' | 'txt-rules';
+
+const COLLAPSED_TAG_FILTER_HEIGHT = 112;
+
+const booksAdminTabs = [
+  { id: 'management', label: '书籍管理', icon: BookOpen },
+  { id: 'list', label: '书籍列表', icon: List },
+  { id: 'tags', label: '标签管理', icon: Tags },
+  { id: 'txt-rules', label: 'TXT规则', icon: FileText }
+] satisfies Array<{ id: BooksAdminTab; label: string; icon: typeof BookOpen }>;
+
+function normalizeBooksAdminTab(tab: string | null): BooksAdminTab {
+  return booksAdminTabs.some((item) => item.id === tab) ? (tab as BooksAdminTab) : 'management';
+}
 
 export function AdminBooksPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [sources, setSources] = useState<BookSource[]>([]);
   const [tags, setTags] = useState<TagWithStats[]>([]);
   const [bookCount, setBookCount] = useState(0);
@@ -42,7 +64,17 @@ export function AdminBooksPage() {
   const { confirm } = useConfirm();
   const { showToast } = useToast();
 
+  const activeTab = normalizeBooksAdminTab(searchParams.get('tab'));
   const enabledSources = useMemo(() => sources.filter((source) => source.enabled), [sources]);
+
+  const selectTab = useCallback((tab: BooksAdminTab) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (tab === 'management') next.delete('tab');
+      else next.set('tab', tab);
+      return next;
+    });
+  }, [setSearchParams]);
 
   const refreshStats = useCallback(async () => {
     const [count, sourceList, tagList] = await Promise.all([bookApi.count(), sourceApi.list(), tagApi.list().catch(() => [])]);
@@ -176,154 +208,177 @@ export function AdminBooksPage() {
 
   return (
     <main className="page-stack">
-      <section className="section">
-        <div className="section-header">
-          <h2>书籍管理</h2>
-          <div className="toolbar">
-            <button className="button secondary" type="button" onClick={() => void refreshStats()}>
-              <RefreshCw size={16} />
-              刷新
+      <div className="subtab-bar" role="tablist" aria-label="书籍管理子页面">
+        {booksAdminTabs.map((item) => {
+          const Icon = item.icon;
+          const selected = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              className={selected ? 'subtab active' : 'subtab'}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => selectTab(item.id)}
+            >
+              <Icon size={16} />
+              <span>{item.label}</span>
             </button>
-            <button className="button primary" type="button" disabled={scanning} onClick={() => setScanTarget({ kind: 'all' })}>
-              <Search size={16} />
-              扫描全部
-            </button>
-          </div>
-        </div>
-        <div className="stats-grid compact">
-          <div className="stat-card">
-            <strong>{bookCount}</strong>
-            <span>图书总数</span>
-          </div>
-          <div className="stat-card">
-            <strong>{sources.length}</strong>
-            <span>书籍源</span>
-          </div>
-        </div>
-      </section>
+          );
+        })}
+      </div>
 
-      <section className="section">
-        <h2>添加书籍源</h2>
-        <form className="inline-form" onSubmit={addSource}>
-          <label>
-            源名称
-            <input name="name" placeholder="个人收藏" required />
-          </label>
-          <label className="grow">
-            文件路径
-            <input name="path" placeholder="/volume1/books" required />
-          </label>
-          <button className="button secondary" type="button" onClick={() => void openDirectory('/')}>
-            <FolderOpen size={16} />
-            浏览
-          </button>
-          <button className="button primary" type="submit">
-            <Plus size={16} />
-            添加
-          </button>
-        </form>
-      </section>
+      {activeTab === 'management' && (
+        <>
+          <section className="section">
+            <div className="section-header">
+              <h2>书籍管理</h2>
+              <div className="toolbar">
+                <button className="button secondary" type="button" onClick={() => void refreshStats()}>
+                  <RefreshCw size={16} />
+                  刷新
+                </button>
+                <button className="button primary" type="button" disabled={scanning} onClick={() => setScanTarget({ kind: 'all' })}>
+                  <Search size={16} />
+                  扫描全部
+                </button>
+              </div>
+            </div>
+            <div className="stats-grid compact">
+              <div className="stat-card">
+                <strong>{bookCount}</strong>
+                <span>图书总数</span>
+              </div>
+              <div className="stat-card">
+                <strong>{sources.length}</strong>
+                <span>书籍源</span>
+              </div>
+            </div>
+          </section>
 
-      <section className="section">
-        <h2>书籍源</h2>
-        {sources.length === 0 ? (
-          <EmptyState label="暂无书籍源" />
-        ) : (
-          <div className="list">
-            {sources.map((source) => (
-              <article key={source.id} className="source-row">
-                <div className="source-line">
-                  <button className="icon-button" type="button" onClick={() => void toggleSourceBooks(source.id)} aria-label="展开书籍">
-                    {expandedSources.has(source.id) ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                  </button>
-                  <div className="grow">
-                    <strong>{source.name}</strong>
-                    <span className="path-text">{source.path}</span>
-                  </div>
-                  <span className={source.enabled ? 'pill' : 'pill muted-pill'}>{source.enabled ? '已启用' : '已禁用'}</span>
-                  <div className="row-actions">
-                    <button className="button secondary" type="button" disabled={scanning} onClick={() => setScanTarget({ kind: 'source', sourceId: source.id })}>
-                      <Search size={16} />
-                      扫描
-                    </button>
-                    <button className="button secondary" type="button" onClick={() => void toggleSource(source)}>
-                      {source.enabled ? '禁用' : '启用'}
-                    </button>
-                    <button className="button danger" type="button" onClick={() => void deleteSource(source)}>
-                      <Trash2 size={16} />
-                      删除
-                    </button>
-                  </div>
-                </div>
-                {expandedSources.has(source.id) && (
-                  <div className="nested-list">
-                    {!sourceBooks[source.id] ? (
-                      <LoadingState />
-                    ) : sourceBooks[source.id].length === 0 ? (
-                      <EmptyState label="该书籍源暂无书籍" />
-                    ) : (
-                      sourceBooks[source.id].map((book) => (
-                        <button key={book.id} className="book-line" type="button" onClick={() => setSelectedBookId(book.id)}>
-                          <BookOpen size={16} />
-                          <span>{book.title}</span>
-                          <small>{book.author || '未知作者'} · {formatFileSize(book.fileSize)}</small>
+          <section className="section">
+            <h2>添加书籍源</h2>
+            <form className="inline-form" onSubmit={addSource}>
+              <label>
+                源名称
+                <input name="name" placeholder="个人收藏" required />
+              </label>
+              <label className="grow">
+                文件路径
+                <input name="path" placeholder="/volume1/books" required />
+              </label>
+              <button className="button secondary" type="button" onClick={() => void openDirectory('/')}>
+                <FolderOpen size={16} />
+                浏览
+              </button>
+              <button className="button primary" type="submit">
+                <Plus size={16} />
+                添加
+              </button>
+            </form>
+          </section>
+
+          <section className="section">
+            <h2>书籍源</h2>
+            {sources.length === 0 ? (
+              <EmptyState label="暂无书籍源" />
+            ) : (
+              <div className="list">
+                {sources.map((source) => (
+                  <article key={source.id} className="source-row">
+                    <div className="source-line">
+                      <button className="icon-button" type="button" onClick={() => void toggleSourceBooks(source.id)} aria-label="展开书籍">
+                        {expandedSources.has(source.id) ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                      </button>
+                      <div className="grow">
+                        <strong>{source.name}</strong>
+                        <span className="path-text">{source.path}</span>
+                      </div>
+                      <span className={source.enabled ? 'pill' : 'pill muted-pill'}>{source.enabled ? '已启用' : '已禁用'}</span>
+                      <div className="row-actions">
+                        <button className="button secondary" type="button" disabled={scanning} onClick={() => setScanTarget({ kind: 'source', sourceId: source.id })}>
+                          <Search size={16} />
+                          扫描
                         </button>
-                      ))
+                        <button className="button secondary" type="button" onClick={() => void toggleSource(source)}>
+                          {source.enabled ? '禁用' : '启用'}
+                        </button>
+                        <button className="button danger" type="button" onClick={() => void deleteSource(source)}>
+                          <Trash2 size={16} />
+                          删除
+                        </button>
+                      </div>
+                    </div>
+                    {expandedSources.has(source.id) && (
+                      <div className="nested-list">
+                        {!sourceBooks[source.id] ? (
+                          <LoadingState />
+                        ) : sourceBooks[source.id].length === 0 ? (
+                          <EmptyState label="该书籍源暂无书籍" />
+                        ) : (
+                          sourceBooks[source.id].map((book) => (
+                            <button key={book.id} className="book-line" type="button" onClick={() => setSelectedBookId(book.id)}>
+                              <BookOpen size={16} />
+                              <span>{book.title}</span>
+                              <small>{book.author || '未知作者'} · {formatFileSize(book.fileSize)}</small>
+                            </button>
+                          ))
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
-      <section className="section">
-        <div className="section-header">
-          <h2>书籍列表</h2>
-          <div className="toolbar">
-            <button className="button secondary" type="button" onClick={() => { setSelectedTags(new Set()); setSourceFilter(null); }}>
-              清除筛选
-            </button>
-            <button className="button secondary" type="button" onClick={() => setTagMode(tagMode === 'AND' ? 'OR' : 'AND')}>
-              {tagMode} 模式
-            </button>
+      {activeTab === 'list' && (
+        <section className="section">
+          <div className="section-header">
+            <h2>书籍列表</h2>
+            <div className="toolbar">
+              <button className="button secondary" type="button" onClick={() => { setSelectedTags(new Set()); setSourceFilter(null); }}>
+                清除筛选
+              </button>
+              <button className="button secondary" type="button" onClick={() => setTagMode(tagMode === 'AND' ? 'OR' : 'AND')}>
+                {tagMode} 模式
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="filter-bar">
-          <button className={sourceFilter === null ? 'chip active' : 'chip'} type="button" onClick={() => setSourceFilter(null)}>所有来源</button>
-          {enabledSources.map((source) => (
-            <button key={source.id} className={sourceFilter === source.id ? 'chip active' : 'chip'} type="button" onClick={() => setSourceFilter(source.id)}>
-              {source.name}
-            </button>
-          ))}
-        </div>
-        {tags.length > 0 && (
           <div className="filter-bar">
-            {tags.map((tag) => (
-              <button key={tag.id} className={selectedTags.has(tag.id) ? 'chip active' : 'chip'} type="button" onClick={() => toggleTag(tag.id)}>
-                {tag.name}
+            <button className={sourceFilter === null ? 'chip active' : 'chip'} type="button" onClick={() => setSourceFilter(null)}>所有来源</button>
+            {enabledSources.map((source) => (
+              <button key={source.id} className={sourceFilter === source.id ? 'chip active' : 'chip'} type="button" onClick={() => setSourceFilter(source.id)}>
+                {source.name}
               </button>
             ))}
           </div>
-        )}
-        {!books ? (
-          <LoadingState />
-        ) : books.length === 0 ? (
-          <EmptyState label="暂无书籍" />
-        ) : (
-          <div className="book-grid">
-            {books.map((book) => (
-              <button key={book.id} className="book-card" type="button" onClick={() => setSelectedBookId(book.id)}>
-                <div className="book-cover">{book.coverPath ? <img src={book.coverPath} alt="" /> : <BookOpen size={36} />}</div>
-                <strong>{book.title}</strong>
-                <span>{book.author || '未知作者'}</span>
-                <small>{book.format?.toUpperCase()} · {formatRelativeBookTime(book)}</small>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+          {tags.length > 0 && (
+            <CollapsibleTagFilter tags={tags} selectedTags={selectedTags} onToggle={toggleTag} />
+          )}
+          {!books ? (
+            <LoadingState />
+          ) : books.length === 0 ? (
+            <EmptyState label="暂无书籍" />
+          ) : (
+            <div className="book-grid">
+              {books.map((book) => (
+                <button key={book.id} className="book-card" type="button" onClick={() => setSelectedBookId(book.id)}>
+                  <div className="book-cover">{book.coverPath ? <img src={book.coverPath} alt="" /> : <BookOpen size={36} />}</div>
+                  <strong>{book.title}</strong>
+                  <span>{book.author || '未知作者'}</span>
+                  <small>{book.format?.toUpperCase()} · {formatRelativeBookTime(book)}</small>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {activeTab === 'tags' && <TagsManagementSection />}
+      {activeTab === 'txt-rules' && <TxtRulesManagementSection />}
 
       <FileBrowserModal
         open={fileBrowserOpen}
@@ -344,6 +399,61 @@ export function AdminBooksPage() {
         }}
       />
     </main>
+  );
+}
+
+function CollapsibleTagFilter({
+  tags,
+  selectedTags,
+  onToggle
+}: {
+  tags: TagWithStats[];
+  selectedTags: Set<number>;
+  onToggle: (tagId: number) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [canToggle, setCanToggle] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const measure = useCallback(() => {
+    const element = containerRef.current;
+    setCanToggle((element?.scrollHeight ?? 0) > COLLAPSED_TAG_FILTER_HEIGHT + 1 || tags.length > 12);
+  }, [tags.length]);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, tags]);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [measure]);
+
+  useEffect(() => {
+    if (!canToggle) setExpanded(false);
+  }, [canToggle]);
+
+  return (
+    <div className="collapsible-filter">
+      <div
+        ref={containerRef}
+        className={expanded ? 'filter-bar tag-filter-grid expanded' : 'filter-bar tag-filter-grid collapsed'}
+        data-testid="book-list-tag-filter"
+      >
+        {tags.map((tag) => (
+          <button key={tag.id} className={selectedTags.has(tag.id) ? 'chip active' : 'chip'} type="button" onClick={() => onToggle(tag.id)}>
+            {tag.name}
+          </button>
+        ))}
+      </div>
+      {canToggle && (
+        <button className="button secondary compact-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((current) => !current)}>
+          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {expanded ? '收起标签' : '展开标签'}
+        </button>
+      )}
+    </div>
   );
 }
 

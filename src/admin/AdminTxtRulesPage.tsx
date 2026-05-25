@@ -42,6 +42,14 @@ function formToRule(form: HTMLFormElement): TxtParseRuleRequest {
 }
 
 export function AdminTxtRulesPage() {
+  return (
+    <main className="page-stack">
+      <TxtRulesManagementSection />
+    </main>
+  );
+}
+
+export function TxtRulesManagementSection() {
   const [rules, setRules] = useState<TxtParseRule[] | null>(null);
   const [editing, setEditing] = useState<TxtParseRule | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -136,7 +144,7 @@ export function AdminTxtRulesPage() {
   }
 
   return (
-    <main className="page-stack">
+    <>
       <section className="section">
         <div className="section-header">
           <h2>TXT 解析规则</h2>
@@ -209,7 +217,7 @@ export function AdminTxtRulesPage() {
           </div>
         </div>
       </Modal>
-    </main>
+    </>
   );
 }
 

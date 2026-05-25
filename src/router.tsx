@@ -4,8 +4,6 @@ import { AdminBackgroundParsePage } from './admin/AdminBackgroundParsePage';
 import { AdminBooksPage } from './admin/AdminBooksPage';
 import { AdminDashboardPage } from './admin/AdminDashboardPage';
 import { AdminInviteTokensPage } from './admin/AdminInviteTokensPage';
-import { AdminTagsPage } from './admin/AdminTagsPage';
-import { AdminTxtRulesPage } from './admin/AdminTxtRulesPage';
 import { AdminUsersPage } from './admin/AdminUsersPage';
 import { LoginPage } from './routes/LoginPage';
 import { ReaderPage } from './routes/ReaderPage';
@@ -34,8 +32,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminDashboardPage /> },
       { path: 'books', element: <AdminBooksPage /> },
-      { path: 'tags', element: <AdminTagsPage /> },
-      { path: 'txt-rules', element: <AdminTxtRulesPage /> },
+      { path: 'tags', element: <Navigate to="/admin/books?tab=tags" replace /> },
+      { path: 'txt-rules', element: <Navigate to="/admin/books?tab=txt-rules" replace /> },
       { path: 'background-parse', element: <AdminBackgroundParsePage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'invite-tokens', element: <AdminInviteTokensPage /> }

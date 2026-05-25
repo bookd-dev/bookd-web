@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, ChartNoAxesColumn, FileText, LogOut, RefreshCw, Tags, Ticket, Users } from 'lucide-react';
+import { BookOpen, ChartNoAxesColumn, LogOut, RefreshCw, Ticket, Users } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/bookdApi';
 import type { User } from '../api/types';
@@ -8,8 +8,6 @@ import { clearSession, getRoleText } from '../auth/session';
 const navItems = [
   { to: '/admin', label: '首页', icon: ChartNoAxesColumn, end: true },
   { to: '/admin/books', label: '书籍管理', icon: BookOpen },
-  { to: '/admin/tags', label: '标签管理', icon: Tags },
-  { to: '/admin/txt-rules', label: 'TXT规则', icon: FileText },
   { to: '/admin/background-parse', label: '后台解析', icon: RefreshCw },
   { to: '/admin/users', label: '用户管理', icon: Users },
   { to: '/admin/invite-tokens', label: '邀请码', icon: Ticket }
