@@ -79,7 +79,8 @@ export function AdminBooksPage() {
 
   async function addSource(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const name = String(form.get('name') ?? '').trim();
     const path = String(form.get('path') ?? '').trim();
     if (!name || !path) {
@@ -89,7 +90,7 @@ export function AdminBooksPage() {
     try {
       await sourceApi.create(name, path);
       showToast('书籍源已添加', 'success');
-      event.currentTarget.reset();
+      formElement.reset();
       await refreshStats();
     } catch (error) {
       showToast(error instanceof Error ? error.message : '添加失败', 'error');
