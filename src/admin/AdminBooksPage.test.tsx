@@ -5,6 +5,7 @@ import { AdminBooksPage } from './AdminBooksPage';
 import { ConfirmProvider } from '../components/ConfirmProvider';
 import { ToastProvider } from '../components/ToastProvider';
 import { bookApi, sourceApi, tagApi, txtRuleApi } from '../api/bookdApi';
+import { LocaleProvider, setCurrentLocale, type Locale } from '../i18n';
 
 vi.mock('../api/bookdApi', () => ({
   bookApi: {
@@ -42,14 +43,17 @@ vi.mock('../api/bookdApi', () => ({
   }
 }));
 
-function renderPage() {
+function renderPage(locale: Locale = 'zh-CN') {
+  setCurrentLocale(locale);
   return render(
     <MemoryRouter>
-      <ToastProvider>
-        <ConfirmProvider>
-          <AdminBooksPage />
-        </ConfirmProvider>
-      </ToastProvider>
+      <LocaleProvider>
+        <ToastProvider>
+          <ConfirmProvider>
+            <AdminBooksPage />
+          </ConfirmProvider>
+        </ToastProvider>
+      </LocaleProvider>
     </MemoryRouter>
   );
 }
@@ -124,5 +128,20 @@ describe('AdminBooksPage', () => {
     await user.click(screen.getByRole('tab', { name: /TXT规则/ }));
     expect(await screen.findByRole('heading', { name: 'TXT 解析规则' })).toBeInTheDocument();
     expect(txtRuleApi.list).toHaveBeenCalled();
+  });
+
+  test('renders representative English labels without translating API data', async () => {
+    vi.mocked(sourceApi.list).mockResolvedValue([{
+      id: 1,
+      name: '个人收藏',
+      path: '/books',
+      enabled: true
+    }]);
+
+    renderPage('en');
+
+    expect(await screen.findByRole('heading', { name: 'Book Management' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Source name')).toBeInTheDocument();
+    expect(screen.getByText('个人收藏')).toBeInTheDocument();
   });
 });

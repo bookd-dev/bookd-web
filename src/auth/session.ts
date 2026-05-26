@@ -1,4 +1,5 @@
 import type { User } from '../api/types';
+import { translate } from '../i18n';
 
 export interface Session {
   token: string;
@@ -30,8 +31,8 @@ export function clearSession(): void {
 }
 
 export function getRoleText(role: string): string {
-  if (role === 'admin') return '管理员';
-  if (role === 'user') return '普通用户';
-  if (role === 'guest') return '访客';
+  if (role === 'admin') return translate('roles.admin');
+  if (role === 'user') return translate('roles.user');
+  if (role === 'guest') return translate('roles.guest');
   return role;
 }

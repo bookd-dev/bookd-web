@@ -5,6 +5,7 @@ import { authApi } from '../api/bookdApi';
 import { destinationForRole } from '../auth/routing';
 import { getStoredToken, saveSession } from '../auth/session';
 import { useToast } from '../components/ToastProvider';
+import { LanguageSelector, useI18n } from '../i18n';
 
 type Tab = 'login' | 'register';
 
@@ -14,6 +15,7 @@ export function LoginPage() {
   const [loginUsername, setLoginUsername] = useState('');
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +49,7 @@ export function LoginPage() {
       saveSession(result);
       navigate(destinationForRole(result.user), { replace: true });
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '登录失败', 'error');
+      showToast(error instanceof Error ? error.message : t('auth.loginFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -67,11 +69,11 @@ export function LoginPage() {
       } else {
         await authApi.registerGuest(username, password, email);
       }
-      showToast('注册成功，请登录', 'success');
+      showToast(t('auth.registerSuccess'), 'success');
       setLoginUsername(username);
       setTab('login');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '注册失败', 'error');
+      showToast(error instanceof Error ? error.message : t('auth.registerFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -81,51 +83,52 @@ export function LoginPage() {
     <main className="auth-page">
       <section className="auth-panel">
         <h1>Bookd</h1>
-        <p>图书管理系统</p>
+        <p>{t('auth.subtitle')}</p>
+        <LanguageSelector />
         <div className="segmented">
           <button className={tab === 'login' ? 'active' : ''} type="button" onClick={() => setTab('login')}>
-            登录
+            {t('auth.login')}
           </button>
           <button className={tab === 'register' ? 'active' : ''} type="button" onClick={() => setTab('register')}>
-            注册
+            {t('auth.register')}
           </button>
         </div>
         {tab === 'login' ? (
           <form className="form" onSubmit={handleLogin}>
             <label>
-              用户名
+              {t('auth.username')}
               <input name="username" defaultValue={loginUsername} required autoComplete="username" />
             </label>
             <label>
-              密码
+              {t('auth.password')}
               <input name="password" type="password" required autoComplete="current-password" />
             </label>
             <button className="button primary full" disabled={loading} type="submit">
               <LogIn size={18} />
-              登录
+              {t('auth.login')}
             </button>
           </form>
         ) : (
           <form className="form" onSubmit={handleRegister}>
             <label>
-              用户名
+              {t('auth.username')}
               <input name="username" required autoComplete="username" />
             </label>
             <label>
-              密码
+              {t('auth.password')}
               <input name="password" type="password" required autoComplete="new-password" />
             </label>
             <label>
-              邮箱
+              {t('auth.email')}
               <input name="email" type="email" autoComplete="email" />
             </label>
             <label>
-              邀请码
-              <input name="inviteToken" placeholder="留空注册为访客" />
+              {t('auth.inviteToken')}
+              <input name="inviteToken" placeholder={t('auth.inviteTokenPlaceholder')} />
             </label>
             <button className="button primary full" disabled={loading} type="submit">
               <UserPlus size={18} />
-              注册
+              {t('auth.register')}
             </button>
           </form>
         )}

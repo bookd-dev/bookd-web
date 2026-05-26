@@ -6,11 +6,13 @@ import type { User } from '../api/types';
 import { clearSession, getRoleText } from '../auth/session';
 import { LoadingState } from '../components/States';
 import { useToast } from '../components/ToastProvider';
+import { LanguageSelector, useI18n } from '../i18n';
 
 export function ReaderPage() {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   useEffect(() => {
     authApi.me().then(setUser).catch(() => {
@@ -28,35 +30,36 @@ export function ReaderPage() {
     }
   }
 
-  if (!user) return <LoadingState label="正在加载用户信息..." />;
+  if (!user) return <LoadingState label={t('reader.loadingUser')} />;
 
   return (
     <main className="reader-shell">
       <section className="reader-panel">
         <BookOpen size={52} />
-        <h1>Bookd 电子书阅读器</h1>
-        <p>网页阅读器正在开发中，此入口已迁入 React Web 壳。</p>
+        <h1>{t('reader.title')}</h1>
+        <p>{t('reader.subtitle')}</p>
+        <LanguageSelector />
         <div className="user-summary">
-          <span>当前登录</span>
+          <span>{t('reader.currentLogin')}</span>
           <strong>
             {user.username} · {getRoleText(user.role)}
           </strong>
         </div>
         {user.role === 'admin' && (
           <button className="button secondary" type="button" onClick={() => navigate('/admin')}>
-            进入管理后台
+            {t('reader.enterAdmin')}
           </button>
         )}
         <button
           className="button danger"
           type="button"
           onClick={() => {
-            showToast('已退出登录', 'info');
+            showToast(t('reader.loggedOut'), 'info');
             void logout();
           }}
         >
           <LogOut size={18} />
-          退出登录
+          {t('reader.logout')}
         </button>
       </section>
     </main>

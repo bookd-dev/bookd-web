@@ -6,6 +6,7 @@ import { useConfirm } from '../components/ConfirmProvider';
 import { Modal } from '../components/Modal';
 import { EmptyState, LoadingState } from '../components/States';
 import { useToast } from '../components/ToastProvider';
+import { useI18n } from '../i18n';
 
 const DEFAULT_RULES_JSON = `[
   {
@@ -57,6 +58,7 @@ export function TxtRulesManagementSection() {
   const [jsonContent, setJsonContent] = useState('');
   const { confirm } = useConfirm();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   async function load() {
     setRules(await txtRuleApi.list());
@@ -70,16 +72,16 @@ export function TxtRulesManagementSection() {
     event.preventDefault();
     const request = formToRule(event.currentTarget);
     if (!request.name || !request.rule) {
-      showToast('请填写规则名称和正则表达式', 'error');
+      showToast(t('txtRules.missingRequired'), 'error');
       return;
     }
     try {
       await txtRuleApi.create(request);
-      showToast('规则创建成功', 'success');
+      showToast(t('txtRules.created'), 'success');
       setAddOpen(false);
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '创建失败', 'error');
+      showToast(error instanceof Error ? error.message : t('txtRules.createFailed'), 'error');
     }
   }
 
@@ -88,27 +90,27 @@ export function TxtRulesManagementSection() {
     if (!editing) return;
     const request = formToRule(event.currentTarget);
     if (!request.name || !request.rule) {
-      showToast('请填写规则名称和正则表达式', 'error');
+      showToast(t('txtRules.missingRequired'), 'error');
       return;
     }
     try {
       await txtRuleApi.update(editing.id, request);
-      showToast('规则更新成功', 'success');
+      showToast(t('txtRules.updated'), 'success');
       setEditing(null);
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '更新失败', 'error');
+      showToast(error instanceof Error ? error.message : t('txtRules.updateFailed'), 'error');
     }
   }
 
   async function deleteRule(rule: TxtParseRule) {
-    if (!(await confirm({ message: `确定要删除规则 "${rule.name}" 吗？`, danger: true }))) return;
+    if (!(await confirm({ message: t('txtRules.deleteConfirm', { name: rule.name }), danger: true }))) return;
     try {
       await txtRuleApi.delete(rule.id);
-      showToast('规则已删除', 'success');
+      showToast(t('txtRules.deleted'), 'success');
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '删除失败', 'error');
+      showToast(error instanceof Error ? error.message : t('txtRules.deleteFailed'), 'error');
     }
   }
 
@@ -117,29 +119,29 @@ export function TxtRulesManagementSection() {
       await txtRuleApi.toggle(rule.id);
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '操作失败', 'error');
+      showToast(error instanceof Error ? error.message : t('common.operationFailed'), 'error');
     }
   }
 
   async function importRules() {
     if (!jsonContent.trim()) {
-      showToast('请输入 JSON 内容', 'error');
+      showToast(t('txtRules.jsonRequired'), 'error');
       return;
     }
     try {
       JSON.parse(jsonContent);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'JSON 格式错误', 'error');
+      showToast(error instanceof Error ? error.message : t('txtRules.jsonInvalid'), 'error');
       return;
     }
     try {
       const result = await txtRuleApi.importJson(jsonContent);
-      showToast(`导入 ${result.imported} 条，跳过 ${result.skipped} 条`, 'success');
+      showToast(t('txtRules.importDone', { imported: result.imported, skipped: result.skipped }), 'success');
       setImportOpen(false);
       setJsonContent('');
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '导入失败', 'error');
+      showToast(error instanceof Error ? error.message : t('txtRules.importFailed'), 'error');
     }
   }
 
@@ -147,22 +149,22 @@ export function TxtRulesManagementSection() {
     <>
       <section className="section">
         <div className="section-header">
-          <h2>TXT 解析规则</h2>
+          <h2>{t('txtRules.title')}</h2>
           <div className="toolbar">
             <button className="button secondary" type="button" onClick={() => setImportOpen(true)}>
               <Download size={16} />
-              JSON 导入
+              {t('txtRules.jsonImport')}
             </button>
             <button className="button primary" type="button" onClick={() => setAddOpen(true)}>
               <Plus size={16} />
-              添加规则
+              {t('txtRules.addRule')}
             </button>
           </div>
         </div>
         {!rules ? (
           <LoadingState />
         ) : rules.length === 0 ? (
-          <EmptyState label="暂无解析规则" />
+          <EmptyState label={t('txtRules.empty')} />
         ) : (
           <div className="list">
             {rules.map((rule) => (
@@ -170,21 +172,21 @@ export function TxtRulesManagementSection() {
                 <div className="rule-main">
                   <strong>{rule.name}</strong>
                   <code>{rule.rule}</code>
-                  {rule.example && <span>示例：{rule.example}</span>}
+                  {rule.example && <span>{t('txtRules.example', { example: rule.example })}</span>}
                 </div>
-                <span className="pill">优先级 {rule.priority}</span>
+                <span className="pill">{t('txtRules.priority', { priority: rule.priority })}</span>
                 <div className="row-actions">
                   <button className="button secondary" type="button" onClick={() => void toggleRule(rule)}>
                     <Power size={16} />
-                    {rule.enabled ? '禁用' : '启用'}
+                    {rule.enabled ? t('common.disable') : t('common.enable')}
                   </button>
                   <button className="button secondary" type="button" onClick={() => setEditing(rule)}>
                     <Edit2 size={16} />
-                    编辑
+                    {t('common.edit')}
                   </button>
                   <button className="button danger" type="button" onClick={() => void deleteRule(rule)}>
                     <Trash2 size={16} />
-                    删除
+                    {t('common.delete')}
                   </button>
                 </div>
               </article>
@@ -193,26 +195,26 @@ export function TxtRulesManagementSection() {
         )}
       </section>
 
-      <Modal open={addOpen} title="添加 TXT 解析规则" onClose={() => setAddOpen(false)} wide>
+      <Modal open={addOpen} title={t('txtRules.addTitle')} onClose={() => setAddOpen(false)} wide>
         <TxtRuleForm onSubmit={saveNew} />
       </Modal>
 
-      <Modal open={Boolean(editing)} title="编辑 TXT 解析规则" onClose={() => setEditing(null)} wide>
+      <Modal open={Boolean(editing)} title={t('txtRules.editTitle')} onClose={() => setEditing(null)} wide>
         {editing && <TxtRuleForm initial={editing} onSubmit={saveEdit} />}
       </Modal>
 
-      <Modal open={importOpen} title="导入 TXT 解析规则" onClose={() => setImportOpen(false)} wide>
+      <Modal open={importOpen} title={t('txtRules.importTitle')} onClose={() => setImportOpen(false)} wide>
         <div className="form">
           <label>
-            JSON 内容
+            {t('txtRules.jsonContent')}
             <textarea rows={14} value={jsonContent} onChange={(event) => setJsonContent(event.target.value)} />
           </label>
           <div className="dialog-actions">
             <button className="button secondary" type="button" onClick={() => setJsonContent(DEFAULT_RULES_JSON)}>
-              加载默认规则
+              {t('txtRules.loadDefaults')}
             </button>
             <button className="button primary" type="button" onClick={() => void importRules()}>
-              导入
+              {t('txtRules.import')}
             </button>
           </div>
         </div>
@@ -222,25 +224,27 @@ export function TxtRulesManagementSection() {
 }
 
 function TxtRuleForm({ initial, onSubmit }: { initial?: TxtParseRule; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
+  const { t } = useI18n();
+
   return (
     <form className="form" onSubmit={onSubmit}>
       <label>
-        规则名称
+        {t('txtRules.name')}
         <input name="name" defaultValue={initial?.name ?? ''} autoFocus />
       </label>
       <label>
-        正则表达式
+        {t('txtRules.regex')}
         <textarea name="rule" rows={5} defaultValue={initial?.rule ?? ''} />
       </label>
       <label>
-        示例
+        {t('txtRules.exampleLabel')}
         <input name="example" defaultValue={initial?.example ?? ''} />
       </label>
       <label>
-        优先级
+        {t('txtRules.priorityLabel')}
         <input name="priority" type="number" min={0} max={100} defaultValue={initial?.priority ?? 0} />
       </label>
-      <button className="button primary full" type="submit">保存</button>
+      <button className="button primary full" type="submit">{t('common.save')}</button>
     </form>
   );
 }

@@ -1,4 +1,5 @@
 import { api, ApiError } from './client';
+import { setCurrentLocale } from '../i18n';
 
 function mockJsonResponse(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
@@ -34,6 +35,7 @@ describe('api client', () => {
   });
 
   test('adds auth and language headers for json request', async () => {
+    setCurrentLocale('en');
     window.localStorage.setItem('authToken', 'token-1');
     const fetchMock = vi.fn().mockResolvedValue(mockJsonResponse({ data: true }));
     vi.stubGlobal('fetch', fetchMock);
@@ -47,6 +49,17 @@ describe('api client', () => {
     expect(fetchMock.mock.calls[0][1].body).toBe(JSON.stringify({ name: 'Book' }));
   });
 
+  test('uses selected Chinese locale for request language header', async () => {
+    setCurrentLocale('zh-CN');
+    const fetchMock = vi.fn().mockResolvedValue(mockJsonResponse({ data: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await api.get('/api/test');
+
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get('Accept-Language')).toBe('zh-CN');
+  });
+
   test('does not set content type for form data upload', async () => {
     const fetchMock = vi.fn().mockResolvedValue(mockJsonResponse({ data: { coverPath: '/covers/1.jpg' } }));
     vi.stubGlobal('fetch', fetchMock);
@@ -58,5 +71,17 @@ describe('api client', () => {
     const headers = fetchMock.mock.calls[0][1].headers as Headers;
     expect(headers.has('Content-Type')).toBe(false);
     expect(fetchMock.mock.calls[0][1].body).toBe(formData);
+  });
+
+  test('localizes client-side network errors', async () => {
+    setCurrentLocale('en');
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    await expect(api.get('/api/test')).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+      status: 0,
+      message: 'Network error. Please try again later.',
+      details: 'offline'
+    } satisfies Partial<ApiError>);
   });
 });

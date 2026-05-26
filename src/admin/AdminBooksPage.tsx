@@ -24,6 +24,7 @@ import { useConfirm } from '../components/ConfirmProvider';
 import { Modal } from '../components/Modal';
 import { EmptyState, LoadingState } from '../components/States';
 import { useToast } from '../components/ToastProvider';
+import { useI18n, type I18nKey } from '../i18n';
 import { formatDateTime, formatFileSize, formatNumber, formatRelativeBookTime } from '../utils/format';
 import { buildMetadataUpdate, filterBooksBySource, mergeBooksFromTagResults, type TagFilterMode } from './bookAdminUtils';
 import { TagsManagementSection } from './AdminTagsPage';
@@ -35,11 +36,11 @@ type BooksAdminTab = 'management' | 'list' | 'tags' | 'txt-rules';
 const COLLAPSED_TAG_FILTER_HEIGHT = 112;
 
 const booksAdminTabs = [
-  { id: 'management', label: '书籍管理', icon: BookOpen },
-  { id: 'list', label: '书籍列表', icon: List },
-  { id: 'tags', label: '标签管理', icon: Tags },
-  { id: 'txt-rules', label: 'TXT规则', icon: FileText }
-] satisfies Array<{ id: BooksAdminTab; label: string; icon: typeof BookOpen }>;
+  { id: 'management', labelKey: 'books.tabManagement', icon: BookOpen },
+  { id: 'list', labelKey: 'books.tabList', icon: List },
+  { id: 'tags', labelKey: 'books.tabTags', icon: Tags },
+  { id: 'txt-rules', labelKey: 'books.tabTxtRules', icon: FileText }
+] satisfies Array<{ id: BooksAdminTab; labelKey: I18nKey; icon: typeof BookOpen }>;
 
 function normalizeBooksAdminTab(tab: string | null): BooksAdminTab {
   return booksAdminTabs.some((item) => item.id === tab) ? (tab as BooksAdminTab) : 'management';
@@ -63,6 +64,7 @@ export function AdminBooksPage() {
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
   const { confirm } = useConfirm();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   const activeTab = normalizeBooksAdminTab(searchParams.get('tab'));
   const enabledSources = useMemo(() => sources.filter((source) => source.enabled), [sources]);
@@ -96,10 +98,10 @@ export function AdminBooksPage() {
       }
       setBooks(nextBooks);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '书籍加载失败', 'error');
+      showToast(error instanceof Error ? error.message : t('books.loadFailed'), 'error');
       setBooks([]);
     }
-  }, [selectedTags, sourceFilter, tagMode, showToast]);
+  }, [selectedTags, sourceFilter, tagMode, showToast, t]);
 
   useEffect(() => {
     void refreshStats();
@@ -116,16 +118,16 @@ export function AdminBooksPage() {
     const name = String(form.get('name') ?? '').trim();
     const path = String(form.get('path') ?? '').trim();
     if (!name || !path) {
-      showToast('请填写源名称和路径', 'error');
+      showToast(t('books.sourceRequired'), 'error');
       return;
     }
     try {
       await sourceApi.create(name, path);
-      showToast('书籍源已添加', 'success');
+      showToast(t('books.sourceAdded'), 'success');
       formElement.reset();
       await refreshStats();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '添加失败', 'error');
+      showToast(error instanceof Error ? error.message : t('books.addFailed'), 'error');
     }
   }
 
@@ -135,7 +137,7 @@ export function AdminBooksPage() {
     try {
       setDirectory(await filesystemApi.list(path));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '目录加载失败', 'error');
+      showToast(error instanceof Error ? error.message : t('books.directoryLoadFailed'), 'error');
     }
   }
 
@@ -150,19 +152,19 @@ export function AdminBooksPage() {
       await sourceApi.toggle(source.id);
       await refreshStats();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '操作失败', 'error');
+      showToast(error instanceof Error ? error.message : t('common.operationFailed'), 'error');
     }
   }
 
   async function deleteSource(source: BookSource) {
-    if (!(await confirm({ message: `确定要删除书籍源 "${source.name}" 吗？`, danger: true }))) return;
+    if (!(await confirm({ message: t('books.deleteSourceConfirm', { name: source.name }), danger: true }))) return;
     try {
       await sourceApi.delete(source.id);
-      showToast('书籍源已删除', 'success');
+      showToast(t('books.sourceDeleted'), 'success');
       await refreshStats();
       await loadBooks();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '删除失败', 'error');
+      showToast(error instanceof Error ? error.message : t('users.deleteFailed'), 'error');
     }
   }
 
@@ -181,17 +183,17 @@ export function AdminBooksPage() {
 
   async function executeScan(fullScan: boolean) {
     if (!scanTarget) return;
-    if (scanTarget.kind === 'all' && !(await confirm({ message: '确定要扫描所有启用的书籍源吗？' }))) return;
+    if (scanTarget.kind === 'all' && !(await confirm({ message: t('books.scanAllConfirm') }))) return;
     setScanTarget(null);
     setScanning(true);
     try {
       const result = scanTarget.kind === 'all' ? await scanApi.all(fullScan) : await scanApi.source(scanTarget.sourceId, fullScan);
-      showToast(`扫描完成：发现 ${result.found}，处理 ${result.imported}`, 'success');
+      showToast(t('books.scanDone', { found: result.found, imported: result.imported }), 'success');
       await refreshStats();
       await loadBooks();
       setSourceBooks({});
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '扫描失败', 'error');
+      showToast(error instanceof Error ? error.message : t('books.scanFailed'), 'error');
     } finally {
       setScanning(false);
     }
@@ -208,7 +210,7 @@ export function AdminBooksPage() {
 
   return (
     <main className="page-stack">
-      <div className="subtab-bar" role="tablist" aria-label="书籍管理子页面">
+      <div className="subtab-bar" role="tablist" aria-label={t('books.tabsLabel')}>
         {booksAdminTabs.map((item) => {
           const Icon = item.icon;
           const selected = activeTab === item.id;
@@ -222,7 +224,7 @@ export function AdminBooksPage() {
               onClick={() => selectTab(item.id)}
             >
               <Icon size={16} />
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </button>
           );
         })}
@@ -232,80 +234,80 @@ export function AdminBooksPage() {
         <>
           <section className="section">
             <div className="section-header">
-              <h2>书籍管理</h2>
+              <h2>{t('books.tabManagement')}</h2>
               <div className="toolbar">
                 <button className="button secondary" type="button" onClick={() => void refreshStats()}>
                   <RefreshCw size={16} />
-                  刷新
+                  {t('common.refresh')}
                 </button>
                 <button className="button primary" type="button" disabled={scanning} onClick={() => setScanTarget({ kind: 'all' })}>
                   <Search size={16} />
-                  扫描全部
+                  {t('books.scanAll')}
                 </button>
               </div>
             </div>
             <div className="stats-grid compact">
               <div className="stat-card">
                 <strong>{bookCount}</strong>
-                <span>图书总数</span>
+                <span>{t('dashboard.totalBooks')}</span>
               </div>
               <div className="stat-card">
                 <strong>{sources.length}</strong>
-                <span>书籍源</span>
+                <span>{t('dashboard.sources')}</span>
               </div>
             </div>
           </section>
 
           <section className="section">
-            <h2>添加书籍源</h2>
+            <h2>{t('books.addSource')}</h2>
             <form className="inline-form" onSubmit={addSource}>
               <label>
-                源名称
-                <input name="name" placeholder="个人收藏" required />
+                {t('books.sourceName')}
+                <input name="name" placeholder={t('books.sourceNamePlaceholder')} required />
               </label>
               <label className="grow">
-                文件路径
+                {t('books.filePath')}
                 <input name="path" placeholder="/volume1/books" required />
               </label>
               <button className="button secondary" type="button" onClick={() => void openDirectory('/')}>
                 <FolderOpen size={16} />
-                浏览
+                {t('common.browse')}
               </button>
               <button className="button primary" type="submit">
                 <Plus size={16} />
-                添加
+                {t('common.add')}
               </button>
             </form>
           </section>
 
           <section className="section">
-            <h2>书籍源</h2>
+            <h2>{t('books.sources')}</h2>
             {sources.length === 0 ? (
-              <EmptyState label="暂无书籍源" />
+              <EmptyState label={t('books.noSources')} />
             ) : (
               <div className="list">
                 {sources.map((source) => (
                   <article key={source.id} className="source-row">
                     <div className="source-line">
-                      <button className="icon-button" type="button" onClick={() => void toggleSourceBooks(source.id)} aria-label="展开书籍">
+                      <button className="icon-button" type="button" onClick={() => void toggleSourceBooks(source.id)} aria-label={t('books.expandBooks')}>
                         {expandedSources.has(source.id) ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                       </button>
                       <div className="grow">
                         <strong>{source.name}</strong>
                         <span className="path-text">{source.path}</span>
                       </div>
-                      <span className={source.enabled ? 'pill' : 'pill muted-pill'}>{source.enabled ? '已启用' : '已禁用'}</span>
+                      <span className={source.enabled ? 'pill' : 'pill muted-pill'}>{source.enabled ? t('common.enabled') : t('common.disabled')}</span>
                       <div className="row-actions">
                         <button className="button secondary" type="button" disabled={scanning} onClick={() => setScanTarget({ kind: 'source', sourceId: source.id })}>
                           <Search size={16} />
-                          扫描
+                          {t('books.scan')}
                         </button>
                         <button className="button secondary" type="button" onClick={() => void toggleSource(source)}>
-                          {source.enabled ? '禁用' : '启用'}
+                          {source.enabled ? t('common.disable') : t('common.enable')}
                         </button>
                         <button className="button danger" type="button" onClick={() => void deleteSource(source)}>
                           <Trash2 size={16} />
-                          删除
+                          {t('common.delete')}
                         </button>
                       </div>
                     </div>
@@ -314,13 +316,13 @@ export function AdminBooksPage() {
                         {!sourceBooks[source.id] ? (
                           <LoadingState />
                         ) : sourceBooks[source.id].length === 0 ? (
-                          <EmptyState label="该书籍源暂无书籍" />
+                          <EmptyState label={t('books.noBooksInSource')} />
                         ) : (
                           sourceBooks[source.id].map((book) => (
                             <button key={book.id} className="book-line" type="button" onClick={() => setSelectedBookId(book.id)}>
                               <BookOpen size={16} />
                               <span>{book.title}</span>
-                              <small>{book.author || '未知作者'} · {formatFileSize(book.fileSize)}</small>
+                              <small>{book.author || t('common.unknownAuthor')} · {formatFileSize(book.fileSize, t)}</small>
                             </button>
                           ))
                         )}
@@ -337,18 +339,18 @@ export function AdminBooksPage() {
       {activeTab === 'list' && (
         <section className="section">
           <div className="section-header">
-            <h2>书籍列表</h2>
+            <h2>{t('books.list')}</h2>
             <div className="toolbar">
               <button className="button secondary" type="button" onClick={() => { setSelectedTags(new Set()); setSourceFilter(null); }}>
-                清除筛选
+                {t('books.clearFilters')}
               </button>
               <button className="button secondary" type="button" onClick={() => setTagMode(tagMode === 'AND' ? 'OR' : 'AND')}>
-                {tagMode} 模式
+                {t('books.tagMode', { mode: tagMode })}
               </button>
             </div>
           </div>
           <div className="filter-bar">
-            <button className={sourceFilter === null ? 'chip active' : 'chip'} type="button" onClick={() => setSourceFilter(null)}>所有来源</button>
+            <button className={sourceFilter === null ? 'chip active' : 'chip'} type="button" onClick={() => setSourceFilter(null)}>{t('books.allSources')}</button>
             {enabledSources.map((source) => (
               <button key={source.id} className={sourceFilter === source.id ? 'chip active' : 'chip'} type="button" onClick={() => setSourceFilter(source.id)}>
                 {source.name}
@@ -361,15 +363,15 @@ export function AdminBooksPage() {
           {!books ? (
             <LoadingState />
           ) : books.length === 0 ? (
-            <EmptyState label="暂无书籍" />
+            <EmptyState label={t('books.noBooks')} />
           ) : (
             <div className="book-grid">
               {books.map((book) => (
                 <button key={book.id} className="book-card" type="button" onClick={() => setSelectedBookId(book.id)}>
                   <div className="book-cover">{book.coverPath ? <img src={book.coverPath} alt="" /> : <BookOpen size={36} />}</div>
                   <strong>{book.title}</strong>
-                  <span>{book.author || '未知作者'}</span>
-                  <small>{book.format?.toUpperCase()} · {formatRelativeBookTime(book)}</small>
+                  <span>{book.author || t('common.unknownAuthor')}</span>
+                  <small>{book.format?.toUpperCase()} · {formatRelativeBookTime(book, t)}</small>
                 </button>
               ))}
             </div>
@@ -414,6 +416,7 @@ function CollapsibleTagFilter({
   const [expanded, setExpanded] = useState(false);
   const [canToggle, setCanToggle] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
 
   const measure = useCallback(() => {
     const element = containerRef.current;
@@ -450,7 +453,7 @@ function CollapsibleTagFilter({
       {canToggle && (
         <button className="button secondary compact-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((current) => !current)}>
           {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          {expanded ? '收起标签' : '展开标签'}
+          {expanded ? t('tags.collapse') : t('tags.expand')}
         </button>
       )}
     </div>
@@ -470,8 +473,10 @@ function FileBrowserModal({
   onOpenDirectory: (path: string) => void;
   onSelect: (path: string) => void;
 }) {
+  const { t } = useI18n();
+
   return (
-    <Modal open={open} title="选择文件夹" onClose={onClose} wide>
+    <Modal open={open} title={t('books.chooseFolder')} onClose={onClose} wide>
       {!directory ? (
         <LoadingState />
       ) : (
@@ -480,7 +485,7 @@ function FileBrowserModal({
           {directory.parentPath && (
             <button className="file-row" type="button" onClick={() => onOpenDirectory(directory.parentPath!)}>
               <Folder size={16} />
-              返回上级
+              {t('common.backToParent')}
             </button>
           )}
           {directory.directories.map((item) => (
@@ -489,10 +494,10 @@ function FileBrowserModal({
                 <Folder size={16} />
                 {item.name}
               </button>
-              <button className="button secondary" type="button" onClick={() => onSelect(item.path)}>选择</button>
+              <button className="button secondary" type="button" onClick={() => onSelect(item.path)}>{t('common.select')}</button>
             </div>
           ))}
-          {directory.directories.length === 0 && <EmptyState label="该目录没有可选子目录" />}
+          {directory.directories.length === 0 && <EmptyState label={t('books.noSubfolders')} />}
         </div>
       )}
     </Modal>
@@ -500,16 +505,18 @@ function FileBrowserModal({
 }
 
 function ScanOptionsModal({ open, onClose, onExecute }: { open: boolean; onClose: () => void; onExecute: (fullScan: boolean) => void }) {
+  const { t } = useI18n();
+
   return (
-    <Modal open={open} title="扫描选项" onClose={onClose}>
+    <Modal open={open} title={t('books.scanOptions')} onClose={onClose}>
       <div className="choice-list">
         <button className="choice-button" type="button" onClick={() => onExecute(false)}>
-          <strong>增量扫描</strong>
-          <span>只导入新书，跳过已存在的书籍。</span>
+          <strong>{t('books.incrementalScan')}</strong>
+          <span>{t('books.incrementalScanDesc')}</span>
         </button>
         <button className="choice-button" type="button" onClick={() => onExecute(true)}>
-          <strong>强制全量扫描</strong>
-          <span>重新扫描所有文件，并重新提取元数据。</span>
+          <strong>{t('books.fullScan')}</strong>
+          <span>{t('books.fullScanDesc')}</span>
         </button>
       </div>
     </Modal>
@@ -535,6 +542,7 @@ function BookDetailModal({
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const { confirm } = useConfirm();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   const load = useCallback(async () => {
     if (!bookId) return;
@@ -557,19 +565,19 @@ function BookDetailModal({
     try {
       setChapters(await bookApi.chapters(bookId));
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '章节加载失败', 'error');
+      showToast(error instanceof Error ? error.message : t('books.chaptersLoadFailed'), 'error');
     }
   }
 
   async function reparse() {
     if (!bookId) return;
-    if (!(await confirm({ message: '确定要重新解析这本书的章节吗？' }))) return;
+    if (!(await confirm({ message: t('books.reparseConfirm') }))) return;
     try {
       await bookApi.reparse(bookId);
-      showToast('已加入重解析队列', 'success');
+      showToast(t('books.reparseQueued'), 'success');
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '重解析失败', 'error');
+      showToast(error instanceof Error ? error.message : t('books.reparseFailed'), 'error');
     }
   }
 
@@ -594,7 +602,7 @@ function BookDetailModal({
     const form = new FormData(event.currentTarget);
     const title = String(form.get('title') ?? '').trim();
     if (!title) {
-      showToast('书名不能为空', 'error');
+      showToast(t('books.titleRequired'), 'error');
       return;
     }
     try {
@@ -613,16 +621,16 @@ function BookDetailModal({
         description: String(form.get('description') ?? ''),
         coverPath
       }));
-      showToast('书籍已保存', 'success');
+      showToast(t('books.saved'), 'success');
       await load();
       onChanged();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '保存失败', 'error');
+      showToast(error instanceof Error ? error.message : t('books.saveFailed'), 'error');
     }
   }
 
   return (
-    <Modal open={Boolean(bookId)} title="书籍详情" onClose={onClose} wide>
+    <Modal open={Boolean(bookId)} title={t('books.detailTitle')} onClose={onClose} wide>
       {!book ? (
         <LoadingState />
       ) : editMode ? (
@@ -631,7 +639,7 @@ function BookDetailModal({
             {coverPreview || book.coverPath ? <img src={coverPreview || book.coverPath || ''} alt="" /> : <BookOpen size={52} />}
             <label className="button secondary file-upload">
               <Upload size={16} />
-              更换封面
+              {t('books.changeCover')}
               <input
                 type="file"
                 accept="image/*"
@@ -645,11 +653,11 @@ function BookDetailModal({
           </div>
           <div className="book-detail-info form">
             <label>
-              书名
+              {t('books.title')}
               <input name="title" defaultValue={book.title} />
             </label>
             <label>
-              作者
+              {t('books.author')}
               <input name="author" defaultValue={book.author ?? ''} />
             </label>
             <label>
@@ -657,19 +665,19 @@ function BookDetailModal({
               <input name="isbn" defaultValue={book.isbn ?? ''} />
             </label>
             <label>
-              出版社
+              {t('books.publisher')}
               <input name="publisher" defaultValue={book.publisher ?? ''} />
             </label>
             <label>
-              简介
+              {t('books.description')}
               <textarea name="description" rows={5} defaultValue={book.description ?? ''} />
             </label>
             <TagEditor allTags={allTags} bookTags={bookTags} onAdd={(name) => void addTag(name)} onRemove={(id) => void removeTag(id)} />
             <div className="dialog-actions">
-              <button className="button secondary" type="button" onClick={() => setEditMode(false)}>取消</button>
+              <button className="button secondary" type="button" onClick={() => setEditMode(false)}>{t('common.cancel')}</button>
               <button className="button primary" type="submit">
                 <Save size={16} />
-                保存
+                {t('common.save')}
               </button>
             </div>
           </div>
@@ -681,41 +689,44 @@ function BookDetailModal({
             <div className="section-header">
               <div>
                 <h2>{book.title}</h2>
-                <p>{book.author || '未知作者'}</p>
+                <p>{book.author || t('common.unknownAuthor')}</p>
               </div>
               <div className="toolbar">
                 <button className="button secondary" type="button" onClick={() => void reparse()}>
                   <RefreshCw size={16} />
-                  重解析
+                  {t('books.reparse')}
                 </button>
                 <button className="button secondary" type="button" onClick={() => setEditMode(true)}>
                   <Edit2 size={16} />
-                  编辑
+                  {t('common.edit')}
                 </button>
               </div>
             </div>
             <dl className="meta-grid">
-              <div><dt>格式</dt><dd>{book.format?.toUpperCase()}</dd></div>
-              <div><dt>大小</dt><dd>{formatFileSize(book.fileSize)}</dd></div>
-              <div><dt>ISBN</dt><dd>{book.isbn || '未设置'}</dd></div>
-              <div><dt>出版社</dt><dd>{book.publisher || '未知'}</dd></div>
-              <div><dt>更新时间</dt><dd>{formatDateTime(book.updatedAt)}</dd></div>
-              <div><dt>章节</dt><dd>{book.chaptersParsed ? `${book.chaptersCount} 章` : '未解析'}</dd></div>
+              <div><dt>{t('books.format')}</dt><dd>{book.format?.toUpperCase()}</dd></div>
+              <div><dt>{t('books.size')}</dt><dd>{formatFileSize(book.fileSize, t)}</dd></div>
+              <div><dt>ISBN</dt><dd>{book.isbn || t('common.notSet')}</dd></div>
+              <div><dt>{t('books.publisher')}</dt><dd>{book.publisher || t('common.unknown')}</dd></div>
+              <div><dt>{t('books.updatedAt')}</dt><dd>{formatDateTime(book.updatedAt, t)}</dd></div>
+              <div><dt>{t('books.chapters')}</dt><dd>{book.chaptersParsed ? t('common.chaptersCount', { count: book.chaptersCount }) : t('books.notParsed')}</dd></div>
             </dl>
             <p className="path-text">{book.filePath}</p>
             <div className="tag-row">
-              {bookTags.length === 0 ? <span className="muted">暂无标签</span> : bookTags.map((tag) => <span key={tag.id} className="pill">{tag.name}</span>)}
+              {bookTags.length === 0 ? <span className="muted">{t('common.noTags')}</span> : bookTags.map((tag) => <span key={tag.id} className="pill">{tag.name}</span>)}
             </div>
             {book.description && <p className="description">{book.description}</p>}
             <button className="button secondary" type="button" onClick={() => void loadChapters()}>
-              加载章节
+              {t('books.loadChapters')}
             </button>
             {chapters && (
               <div className="chapters-list">
-                {chapters.chapters.length === 0 ? <EmptyState label="暂无章节信息" /> : chapters.chapters.map((chapter) => (
+                {chapters.chapters.length === 0 ? <EmptyState label={t('books.noChapterInfo')} /> : chapters.chapters.map((chapter) => (
                   <div key={chapter.index} className="chapter-row" style={{ paddingLeft: `${chapter.level * 12 + 12}px` }}>
                     <strong>{chapter.index + 1}. {chapter.title}</strong>
-                    <span>{formatNumber(chapter.wordCount)} 字{chapter.imageCount > 0 ? ` · ${chapter.imageCount} 张图` : ''}</span>
+                    <span>{t('books.chapterStat', {
+                      words: formatNumber(chapter.wordCount),
+                      images: chapter.imageCount > 0 ? t('books.chapterImages', { count: chapter.imageCount }) : ''
+                    })}</span>
                   </div>
                 ))}
               </div>
@@ -740,11 +751,12 @@ function TagEditor({
 }) {
   const [value, setValue] = useState('');
   const currentNames = new Set(bookTags.map((tag) => tag.name));
+  const { t } = useI18n();
 
   return (
     <div className="tag-editor">
       <div className="tag-row">
-        {bookTags.length === 0 ? <span className="muted">暂无标签</span> : bookTags.map((tag) => (
+        {bookTags.length === 0 ? <span className="muted">{t('common.noTags')}</span> : bookTags.map((tag) => (
           <button key={tag.id} className="pill removable" type="button" onClick={() => onRemove(tag.id)}>
             {tag.name} ×
           </button>
@@ -756,8 +768,8 @@ function TagEditor({
         ))}
       </div>
       <div className="inline-form compact-form">
-        <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="新标签名称" />
-        <button className="button secondary" type="button" onClick={() => { onAdd(value); setValue(''); }}>添加标签</button>
+        <input value={value} onChange={(event) => setValue(event.target.value)} placeholder={t('tags.newTagPlaceholder')} />
+        <button className="button secondary" type="button" onClick={() => { onAdd(value); setValue(''); }}>{t('tags.addTag')}</button>
       </div>
     </div>
   );

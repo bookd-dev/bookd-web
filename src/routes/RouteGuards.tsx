@@ -5,11 +5,13 @@ import type { User } from '../api/types';
 import { destinationForRole, resolveRootDestination } from '../auth/routing';
 import { clearSession, getStoredToken, getStoredUser } from '../auth/session';
 import { LoadingState } from '../components/States';
+import { useI18n } from '../i18n';
 
 type GuardState = 'loading' | 'allowed' | 'login' | 'reader';
 
 export function RootRedirect() {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -37,11 +39,12 @@ export function RootRedirect() {
     };
   }, [navigate]);
 
-  return <LoadingState label="正在检查登录状态..." />;
+  return <LoadingState label={t('auth.checkingLogin')} />;
 }
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GuardState>('loading');
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -64,13 +67,14 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  if (state === 'loading') return <LoadingState label="正在验证身份..." />;
+  if (state === 'loading') return <LoadingState label={t('auth.verifyingIdentity')} />;
   if (state === 'login') return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GuardState>('loading');
+  const { t } = useI18n();
 
   useEffect(() => {
     let cancelled = false;
@@ -93,7 +97,7 @@ export function RequireAdmin({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  if (state === 'loading') return <LoadingState label="正在验证管理员权限..." />;
+  if (state === 'loading') return <LoadingState label={t('auth.verifyingAdmin')} />;
   if (state === 'login') return <Navigate to="/login" replace />;
   if (state === 'reader') return <Navigate to="/reader" replace />;
   return <>{children}</>;

@@ -6,11 +6,13 @@ import { getRoleText } from '../auth/session';
 import { useConfirm } from '../components/ConfirmProvider';
 import { EmptyState, LoadingState } from '../components/States';
 import { useToast } from '../components/ToastProvider';
+import { useI18n } from '../i18n';
 
 export function AdminUsersPage() {
   const [users, setUsers] = useState<User[] | null>(null);
   const { confirm } = useConfirm();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   async function load() {
     setUsers(await userApi.list());
@@ -21,37 +23,37 @@ export function AdminUsersPage() {
   }, []);
 
   async function deleteUser(user: User) {
-    const ok = await confirm({ title: '删除用户', message: `确定要删除用户 "${user.username}" 吗？`, danger: true });
+    const ok = await confirm({ title: t('users.deleteTitle'), message: t('users.deleteConfirm', { username: user.username }), danger: true });
     if (!ok) return;
     try {
       await userApi.delete(user.id);
-      showToast('用户已删除', 'success');
+      showToast(t('users.deleted'), 'success');
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '删除失败', 'error');
+      showToast(error instanceof Error ? error.message : t('users.deleteFailed'), 'error');
     }
   }
 
   return (
     <main className="page-stack">
       <section className="section">
-        <h2>用户管理</h2>
+        <h2>{t('users.title')}</h2>
         {!users ? (
           <LoadingState />
         ) : users.length === 0 ? (
-          <EmptyState label="暂无用户" />
+          <EmptyState label={t('users.empty')} />
         ) : (
           <div className="list">
             {users.map((user) => (
               <article key={user.id} className="list-row">
                 <div>
                   <strong>{user.username}</strong>
-                  <span>{user.email || '未设置邮箱'} · {getRoleText(user.role)}</span>
+                  <span>{user.email || t('users.noEmail')} · {getRoleText(user.role)}</span>
                 </div>
                 {user.role !== 'admin' && (
                   <button className="button danger" type="button" onClick={() => void deleteUser(user)}>
                     <Trash2 size={16} />
-                    删除
+                    {t('common.delete')}
                   </button>
                 )}
               </article>

@@ -4,18 +4,20 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/bookdApi';
 import type { User } from '../api/types';
 import { clearSession, getRoleText } from '../auth/session';
+import { LanguageSelector, useI18n, type I18nKey } from '../i18n';
 
 const navItems = [
-  { to: '/admin', label: '首页', icon: ChartNoAxesColumn, end: true },
-  { to: '/admin/books', label: '书籍管理', icon: BookOpen },
-  { to: '/admin/background-parse', label: '后台解析', icon: RefreshCw },
-  { to: '/admin/users', label: '用户管理', icon: Users },
-  { to: '/admin/invite-tokens', label: '邀请码', icon: Ticket }
-];
+  { to: '/admin', labelKey: 'adminLayout.navHome', icon: ChartNoAxesColumn, end: true },
+  { to: '/admin/books', labelKey: 'adminLayout.navBooks', icon: BookOpen },
+  { to: '/admin/background-parse', labelKey: 'adminLayout.navBackgroundParse', icon: RefreshCw },
+  { to: '/admin/users', labelKey: 'adminLayout.navUsers', icon: Users },
+  { to: '/admin/invite-tokens', labelKey: 'adminLayout.navInviteTokens', icon: Ticket }
+] satisfies Array<{ to: string; labelKey: I18nKey; icon: typeof BookOpen; end?: boolean }>;
 
 export function AdminLayout() {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   useEffect(() => {
     authApi.me().then(setUser).catch(() => undefined);
@@ -37,7 +39,7 @@ export function AdminLayout() {
           <BookOpen size={28} />
           <div>
             <strong>Bookd</strong>
-            <span>管理后台</span>
+            <span>{t('adminLayout.brandSubtitle')}</span>
           </div>
         </div>
         <nav className="admin-nav">
@@ -46,7 +48,7 @@ export function AdminLayout() {
             return (
               <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => (isActive ? 'active' : '')}>
                 <Icon size={18} />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </NavLink>
             );
           })}
@@ -55,13 +57,16 @@ export function AdminLayout() {
       <div className="admin-main">
         <header className="admin-topbar">
           <div>
-            <h1>Bookd 电子书管理后台</h1>
-            <p>{user ? `${user.username} · ${getRoleText(user.role)}` : '管理员'}</p>
+            <h1>{t('adminLayout.title')}</h1>
+            <p>{user ? `${user.username} · ${getRoleText(user.role)}` : t('roles.admin')}</p>
           </div>
-          <button className="button danger" type="button" onClick={logout}>
-            <LogOut size={18} />
-            退出
-          </button>
+          <div className="topbar-actions">
+            <LanguageSelector compact />
+            <button className="button danger" type="button" onClick={logout}>
+              <LogOut size={18} />
+              {t('adminLayout.logout')}
+            </button>
+          </div>
         </header>
         <Outlet />
       </div>

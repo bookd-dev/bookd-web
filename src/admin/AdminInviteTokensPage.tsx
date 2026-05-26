@@ -4,10 +4,12 @@ import { userApi } from '../api/bookdApi';
 import type { InviteToken } from '../api/types';
 import { EmptyState, LoadingState } from '../components/States';
 import { useToast } from '../components/ToastProvider';
+import { useI18n } from '../i18n';
 
 export function AdminInviteTokensPage() {
   const [tokens, setTokens] = useState<InviteToken[] | null>(null);
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   async function load() {
     setTokens(await userApi.inviteTokens());
@@ -20,10 +22,10 @@ export function AdminInviteTokensPage() {
   async function generate() {
     try {
       await userApi.createInviteToken();
-      showToast('邀请码生成成功', 'success');
+      showToast(t('inviteTokens.generated'), 'success');
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '生成失败', 'error');
+      showToast(error instanceof Error ? error.message : t('inviteTokens.generateFailed'), 'error');
     }
   }
 
@@ -31,22 +33,22 @@ export function AdminInviteTokensPage() {
     <main className="page-stack">
       <section className="section">
         <div className="section-header">
-          <h2>邀请码管理</h2>
+          <h2>{t('inviteTokens.title')}</h2>
           <button className="button primary" type="button" onClick={() => void generate()}>
             <Plus size={16} />
-            生成新邀请码
+            {t('inviteTokens.generate')}
           </button>
         </div>
         {!tokens ? (
           <LoadingState />
         ) : tokens.length === 0 ? (
-          <EmptyState label="暂无邀请码" />
+          <EmptyState label={t('inviteTokens.empty')} />
         ) : (
           <div className="token-grid">
             {tokens.map((token) => (
               <code key={token.id} className={token.used ? 'token used' : 'token'}>
                 {token.token}
-                <span>{token.used ? '已使用' : '未使用'}</span>
+                <span>{token.used ? t('inviteTokens.used') : t('inviteTokens.unused')}</span>
               </code>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { useI18n } from '../i18n';
 
 interface ConfirmOptions {
   title?: string;
@@ -20,6 +21,7 @@ const ConfirmContext = createContext<ConfirmContextValue | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<PendingConfirm | null>(null);
+  const { t } = useI18n();
 
   const confirm = useCallback((options: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
@@ -41,14 +43,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {pending && (
         <div className="modal-backdrop active" role="presentation">
           <div className="modal-panel confirm-panel" role="dialog" aria-modal="true">
-            <h2>{pending.title ?? '确认操作'}</h2>
+            <h2>{pending.title ?? t('common.confirmAction')}</h2>
             <p>{pending.message}</p>
             <div className="dialog-actions">
               <button type="button" className="button secondary" onClick={() => close(false)}>
-                {pending.cancelText ?? '取消'}
+                {pending.cancelText ?? t('common.cancel')}
               </button>
               <button type="button" className={`button ${pending.danger ? 'danger' : 'primary'}`} onClick={() => close(true)}>
-                {pending.confirmText ?? '确认'}
+                {pending.confirmText ?? t('common.confirm')}
               </button>
             </div>
           </div>

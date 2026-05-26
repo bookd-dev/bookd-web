@@ -1,3 +1,5 @@
+import { getCurrentLocale, translate } from '../i18n';
+
 export const API_BASE = '/api';
 
 export class ApiError extends Error {
@@ -20,8 +22,7 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
 }
 
 export function getBrowserLanguage(): string {
-  const lang = navigator.language || 'zh-CN';
-  return lang.startsWith('zh') ? 'zh-CN' : 'en';
+  return getCurrentLocale();
 }
 
 export function getAuthToken(): string | null {
@@ -43,7 +44,7 @@ export async function apiClient<T>(url: string, options: ApiRequestOptions = {})
   const { skipUnwrap = false, headers: optionHeaders, body, ...fetchOptions } = options;
   const headers = new Headers(optionHeaders);
 
-  headers.set('Accept-Language', getBrowserLanguage());
+  headers.set('Accept-Language', getCurrentLocale());
 
   if (body !== undefined && body !== null && !isFormData(body) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
@@ -70,7 +71,7 @@ export async function apiClient<T>(url: string, options: ApiRequestOptions = {})
     if (!response.ok) {
       throw new ApiError(
         json.code || 'UNKNOWN',
-        json.message || '操作失败',
+        json.message || translate('common.operationFailed'),
         response.status,
         json.details ?? null
       );
@@ -80,7 +81,7 @@ export async function apiClient<T>(url: string, options: ApiRequestOptions = {})
   } catch (error) {
     if (error instanceof ApiError) throw error;
     const message = error instanceof Error ? error.message : String(error);
-    throw new ApiError('NETWORK_ERROR', '网络错误，请稍后重试', 0, message);
+    throw new ApiError('NETWORK_ERROR', translate('common.networkError'), 0, message);
   }
 }
 

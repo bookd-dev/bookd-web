@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 import { EmptyState, LoadingState } from '../components/States';
 import { useConfirm } from '../components/ConfirmProvider';
 import { useToast } from '../components/ToastProvider';
+import { useI18n } from '../i18n';
 
 export function AdminTagsPage() {
   return (
@@ -23,6 +24,7 @@ export function TagsManagementSection() {
   const [mergeTarget, setMergeTarget] = useState('');
   const { confirm } = useConfirm();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   const allSelected = useMemo(() => tags && tags.length > 0 && selected.size === tags.length, [selected.size, tags]);
 
@@ -39,22 +41,22 @@ export function TagsManagementSection() {
     event.preventDefault();
     const name = String(new FormData(event.currentTarget).get('name') ?? '').trim();
     if (!name) {
-      showToast('请输入标签名称', 'error');
+      showToast(t('tags.missingName'), 'error');
       return;
     }
     try {
       await tagApi.create(name);
-      showToast('标签创建成功', 'success');
+      showToast(t('tags.created'), 'success');
       setCreateOpen(false);
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '创建失败', 'error');
+      showToast(error instanceof Error ? error.message : t('tags.createFailed'), 'error');
     }
   }
 
   async function deleteTags(ids: number[]) {
     if (ids.length === 0) return;
-    if (!(await confirm({ message: `确定要删除 ${ids.length} 个标签吗？`, danger: true }))) return;
+    if (!(await confirm({ message: t('tags.deleteConfirm', { count: ids.length }), danger: true }))) return;
     let failed = 0;
     for (const id of ids) {
       try {
@@ -63,34 +65,34 @@ export function TagsManagementSection() {
         failed += 1;
       }
     }
-    showToast(failed ? `删除完成，失败 ${failed} 个` : '标签已删除', failed ? 'info' : 'success');
+    showToast(failed ? t('tags.deletePartial', { count: failed }) : t('tags.deleted'), failed ? 'info' : 'success');
     await load();
   }
 
   async function autoTag() {
-    if (!(await confirm({ message: '确定要自动提取所有书籍标签吗？' }))) return;
+    if (!(await confirm({ message: t('tags.autoTagConfirm') }))) return;
     try {
       const result = await tagApi.autoTagAll();
-      showToast(`处理 ${result.totalBooks} 本，新增 ${result.tagsCreated} 个标签`, 'success');
+      showToast(t('tags.autoTagDone', { books: result.totalBooks, tags: result.tagsCreated }), 'success');
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '自动提取失败', 'error');
+      showToast(error instanceof Error ? error.message : t('tags.autoTagFailed'), 'error');
     }
   }
 
   async function merge() {
     if (selected.size === 0 || !mergeTarget.trim()) {
-      showToast('请选择源标签并输入目标标签', 'error');
+      showToast(t('tags.mergeMissing'), 'error');
       return;
     }
     try {
       await tagApi.merge(Array.from(selected), mergeTarget.trim());
-      showToast('标签合并成功', 'success');
+      showToast(t('tags.merged'), 'success');
       setMergeOpen(false);
       setMergeTarget('');
       await load();
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '合并失败', 'error');
+      showToast(error instanceof Error ? error.message : t('tags.mergeFailed'), 'error');
     }
   }
 
@@ -98,24 +100,24 @@ export function TagsManagementSection() {
     <>
       <section className="section">
         <div className="section-header">
-          <h2>标签管理</h2>
+          <h2>{t('tags.title')}</h2>
           <div className="toolbar">
             <button className="button secondary" type="button" onClick={() => void autoTag()}>
               <RefreshCw size={16} />
-              自动提取
+              {t('tags.autoExtract')}
             </button>
             <button className="button secondary" type="button" onClick={() => setMergeOpen(true)}>
               <GitMerge size={16} />
-              合并标签
+              {t('tags.merge')}
             </button>
             <button className="button primary" type="button" onClick={() => setCreateOpen(true)}>
               <Plus size={16} />
-              创建标签
+              {t('tags.create')}
             </button>
             {selected.size > 0 && (
               <button className="button danger" type="button" onClick={() => void deleteTags(Array.from(selected))}>
                 <Trash2 size={16} />
-                批量删除 {selected.size}
+                {t('tags.batchDelete', { count: selected.size })}
               </button>
             )}
           </div>
@@ -123,7 +125,7 @@ export function TagsManagementSection() {
         {!tags ? (
           <LoadingState />
         ) : tags.length === 0 ? (
-          <EmptyState label="暂无标签" />
+          <EmptyState label={t('tags.empty')} />
         ) : (
           <div className="list">
             <label className="check-row">
@@ -132,7 +134,7 @@ export function TagsManagementSection() {
                 checked={Boolean(allSelected)}
                 onChange={(event) => setSelected(event.target.checked ? new Set(tags.map((tag) => tag.id)) : new Set())}
               />
-              全选
+              {t('tags.selectAll')}
             </label>
             {tags.map((tag) => (
               <article key={tag.id} className="list-row">
@@ -151,10 +153,10 @@ export function TagsManagementSection() {
                   />
                   <strong>{tag.name}</strong>
                 </label>
-                <span>{tag.bookCount} 本书籍</span>
+                <span>{t('common.booksCount', { count: tag.bookCount })}</span>
                 <button className="button danger" type="button" onClick={() => void deleteTags([tag.id])}>
                   <Trash2 size={16} />
-                  删除
+                  {t('common.delete')}
                 </button>
               </article>
             ))}
@@ -162,25 +164,25 @@ export function TagsManagementSection() {
         )}
       </section>
 
-      <Modal open={createOpen} title="创建新标签" onClose={() => setCreateOpen(false)}>
+      <Modal open={createOpen} title={t('tags.createTitle')} onClose={() => setCreateOpen(false)}>
         <form className="form" onSubmit={create}>
           <label>
-            标签名称
+            {t('tags.name')}
             <input name="name" autoFocus />
           </label>
-          <button className="button primary full" type="submit">创建</button>
+          <button className="button primary full" type="submit">{t('common.create')}</button>
         </form>
       </Modal>
 
-      <Modal open={mergeOpen} title="合并标签" onClose={() => setMergeOpen(false)}>
+      <Modal open={mergeOpen} title={t('tags.merge')} onClose={() => setMergeOpen(false)}>
         <div className="form">
-          <p className="muted">使用列表中的复选框选择源标签，输入目标标签名称后合并。</p>
+          <p className="muted">{t('tags.mergeHelp')}</p>
           <label>
-            目标标签名称
+            {t('tags.targetName')}
             <input value={mergeTarget} onChange={(event) => setMergeTarget(event.target.value)} />
           </label>
           <button className="button primary full" type="button" onClick={() => void merge()}>
-            合并标签
+            {t('tags.merge')}
           </button>
         </div>
       </Modal>

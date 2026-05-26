@@ -1,10 +1,12 @@
 import { Loader2 } from 'lucide-react';
+import { useI18n } from '../i18n';
 
-export function LoadingState({ label = '加载中...' }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
+  const { t } = useI18n();
   return (
     <div className="state muted">
       <Loader2 className="spin" size={18} />
-      <span>{label}</span>
+      <span>{label ?? t('common.loading')}</span>
     </div>
   );
 }

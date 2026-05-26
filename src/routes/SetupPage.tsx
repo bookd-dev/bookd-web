@@ -3,11 +3,13 @@ import { Rocket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/bookdApi';
 import { useToast } from '../components/ToastProvider';
+import { LanguageSelector, useI18n } from '../i18n';
 
 export function SetupPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useI18n();
 
   useEffect(() => {
     authApi.hasAdmin().then((status) => {
@@ -24,25 +26,25 @@ export function SetupPage() {
     const email = String(form.get('email') ?? '').trim() || null;
 
     if (username.length < 3) {
-      showToast('用户名至少需要3个字符', 'error');
+      showToast(t('setup.usernameTooShort'), 'error');
       return;
     }
     if (password.length < 6) {
-      showToast('密码至少需要6个字符', 'error');
+      showToast(t('setup.passwordTooShort'), 'error');
       return;
     }
     if (password !== confirmPassword) {
-      showToast('两次输入的密码不一致', 'error');
+      showToast(t('setup.passwordMismatch'), 'error');
       return;
     }
 
     setLoading(true);
     try {
       await authApi.setup(username, password, email);
-      showToast('管理员创建成功，请登录', 'success');
+      showToast(t('setup.adminCreated'), 'success');
       navigate('/login', { replace: true });
     } catch (error) {
-      showToast(error instanceof Error ? error.message : '创建失败', 'error');
+      showToast(error instanceof Error ? error.message : t('setup.createFailed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -52,27 +54,28 @@ export function SetupPage() {
     <main className="auth-page">
       <section className="auth-panel setup-panel">
         <Rocket size={48} />
-        <h1>欢迎使用 Bookd</h1>
-        <p>首次设置，创建管理员账号</p>
+        <h1>{t('setup.title')}</h1>
+        <p>{t('setup.subtitle')}</p>
+        <LanguageSelector />
         <form className="form" onSubmit={submit}>
           <label>
-            用户名
+            {t('auth.username')}
             <input name="username" required autoComplete="username" />
           </label>
           <label>
-            密码
+            {t('auth.password')}
             <input name="password" type="password" required autoComplete="new-password" />
           </label>
           <label>
-            确认密码
+            {t('setup.confirmPassword')}
             <input name="confirmPassword" type="password" required autoComplete="new-password" />
           </label>
           <label>
-            邮箱
+            {t('auth.email')}
             <input name="email" type="email" autoComplete="email" />
           </label>
           <button className="button primary full" disabled={loading} type="submit">
-            创建管理员
+            {t('setup.createAdmin')}
           </button>
         </form>
       </section>

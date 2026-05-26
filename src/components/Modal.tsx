@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 export function Modal({
   open,
@@ -14,6 +15,8 @@ export function Modal({
   onClose: () => void;
   wide?: boolean;
 }) {
+  const { t } = useI18n();
+
   if (!open) return null;
 
   return (
@@ -21,7 +24,7 @@ export function Modal({
       <section className={`modal-panel ${wide ? 'modal-wide' : ''}`} role="dialog" aria-modal="true">
         <header className="modal-header">
           <h2>{title}</h2>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="关闭">
+          <button type="button" className="icon-button" onClick={onClose} aria-label={t('common.close')}>
             <X size={18} />
           </button>
         </header>
