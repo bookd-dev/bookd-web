@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { AdminBooksPage } from './AdminBooksPage';
-import { ConfirmProvider } from '../components/ConfirmProvider';
-import { ToastProvider } from '../components/ToastProvider';
-import { bookApi, sourceApi, tagApi, txtRuleApi } from '../api/bookdApi';
-import { LocaleProvider, setCurrentLocale, type Locale } from '../i18n';
+import { AdminBooksPage } from '../../src/admin/AdminBooksPage';
+import { ConfirmProvider } from '../../src/components/ConfirmProvider';
+import { ToastProvider } from '../../src/components/ToastProvider';
+import { bookApi, sourceApi, tagApi, txtRuleApi } from '../../src/api/bookdApi';
+import { LocaleProvider, setCurrentLocale, type Locale } from '../../src/i18n';
 
-vi.mock('../api/bookdApi', () => ({
+vi.mock('../../src/api/bookdApi', () => ({
   bookApi: {
     count: vi.fn(),
     list: vi.fn()

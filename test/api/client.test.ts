@@ -1,5 +1,5 @@
-import { api, ApiError } from './client';
-import { setCurrentLocale } from '../i18n';
+import { api, ApiError } from '../../src/api/client';
+import { setCurrentLocale } from '../../src/i18n';
 
 function mockJsonResponse(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {

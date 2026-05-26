@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { resetLocaleForTests } from '../i18n';
+import { resetLocaleForTests } from '../../src/i18n';
 
 afterEach(() => {
   vi.restoreAllMocks();

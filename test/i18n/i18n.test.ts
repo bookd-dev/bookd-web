@@ -1,4 +1,4 @@
-import { en, flattenResourceKeys, getIntlMessages, LOCALE_STORAGE_KEY, normalizeLocale, normalizeStoredLocale, resetLocaleForTests, resolveBrowserLocale, setCurrentLocale, subscribeLocale, translate, translateWithLocale, zhCN } from '.';
+import { en, flattenResourceKeys, getIntlMessages, LOCALE_STORAGE_KEY, normalizeLocale, normalizeStoredLocale, resetLocaleForTests, resolveBrowserLocale, setCurrentLocale, subscribeLocale, translate, translateWithLocale, zhCN } from '../../src/i18n';
 
 describe('i18n utilities', () => {
   test('keeps Chinese and English resource keys in sync', () => {

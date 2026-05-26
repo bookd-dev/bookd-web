@@ -2,16 +2,16 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { AdminLayout } from '../admin/AdminLayout';
-import { authApi } from '../api/bookdApi';
-import { ConfirmProvider, useConfirm } from '../components/ConfirmProvider';
-import { EmptyState } from '../components/States';
-import { ToastProvider } from '../components/ToastProvider';
-import { LoginPage } from '../routes/LoginPage';
-import { SetupPage } from '../routes/SetupPage';
-import { LocaleProvider, setCurrentLocale, type Locale } from '.';
+import { AdminLayout } from '../../src/admin/AdminLayout';
+import { authApi } from '../../src/api/bookdApi';
+import { ConfirmProvider, useConfirm } from '../../src/components/ConfirmProvider';
+import { EmptyState } from '../../src/components/States';
+import { ToastProvider } from '../../src/components/ToastProvider';
+import { LoginPage } from '../../src/routes/LoginPage';
+import { SetupPage } from '../../src/routes/SetupPage';
+import { LocaleProvider, setCurrentLocale, type Locale } from '../../src/i18n';
 
-vi.mock('../api/bookdApi', () => ({
+vi.mock('../../src/api/bookdApi', () => ({
   authApi: {
     hasAdmin: vi.fn(),
     me: vi.fn(),

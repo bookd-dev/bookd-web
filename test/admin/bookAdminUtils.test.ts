@@ -1,5 +1,5 @@
-import type { Book } from '../api/types';
-import { buildMetadataUpdate, filterBooksBySource, mergeBooksFromTagResults } from './bookAdminUtils';
+import type { Book } from '../../src/api/types';
+import { buildMetadataUpdate, filterBooksBySource, mergeBooksFromTagResults } from '../../src/admin/bookAdminUtils';
 
 function book(id: number, sourceId: number | null): Book {
   return {

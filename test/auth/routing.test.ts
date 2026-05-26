@@ -1,5 +1,5 @@
-import { resolveRootDestination, destinationForRole } from './routing';
-import type { User } from '../api/types';
+import { resolveRootDestination, destinationForRole } from '../../src/auth/routing';
+import type { User } from '../../src/api/types';
 
 const admin: User = { id: 1, username: 'admin', email: null, role: 'admin' };
 const user: User = { id: 2, username: 'reader', email: null, role: 'user' };
