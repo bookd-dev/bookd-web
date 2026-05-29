@@ -2,6 +2,12 @@ import { api, API_BASE } from './client';
 import type {
   AutoTagResponse,
   BackgroundParseStatus,
+  AiEndpoint,
+  AiEndpointRequest,
+  AiModel,
+  AiModelRequest,
+  AiProvider,
+  AiProviderRequest,
   Book,
   BookCountResponse,
   BookMetadataUpdate,
@@ -13,6 +19,8 @@ import type {
   InviteToken,
   LoginResponse,
   MergeTagsResponse,
+  PersonalizationOverview,
+  PersonalizationSettings,
   ScanResponse,
   ScanStatusResponse,
   Tag,
@@ -107,4 +115,31 @@ export const backgroundParseApi = {
   status: () => api.get<BackgroundParseStatus>(`${API_BASE}/background-parse/status`),
   start: () => api.post<{ message?: string }>(`${API_BASE}/background-parse/start`, {}),
   stop: () => api.post<{ message?: string }>(`${API_BASE}/background-parse/stop`, {})
+};
+
+export const personalizationApi = {
+  overview: () => api.get<PersonalizationOverview>(`${API_BASE}/admin/personalization`),
+  settings: () => api.get<PersonalizationSettings>(`${API_BASE}/admin/settings/personalization`),
+  updateTimeZone: (timeZone: string) => api.put<PersonalizationSettings>(`${API_BASE}/admin/settings/time-zone`, { timeZone })
+};
+
+export const aiProviderApi = {
+  list: () => api.get<AiProvider[]>(`${API_BASE}/admin/ai-providers`),
+  create: (request: AiProviderRequest) => api.post<AiProvider>(`${API_BASE}/admin/ai-providers`, request),
+  update: (providerId: number, request: AiProviderRequest) => api.put<AiProvider>(`${API_BASE}/admin/ai-providers/${providerId}`, request),
+  delete: (providerId: number) => api.delete<{ success: boolean }>(`${API_BASE}/admin/ai-providers/${providerId}`),
+  createEndpoint: (providerId: number, request: AiEndpointRequest) =>
+    api.post<AiEndpoint>(`${API_BASE}/admin/ai-providers/${providerId}/endpoints`, request)
+};
+
+export const aiEndpointApi = {
+  update: (endpointId: number, request: AiEndpointRequest) => api.put<AiEndpoint>(`${API_BASE}/admin/ai-endpoints/${endpointId}`, request),
+  delete: (endpointId: number) => api.delete<{ success: boolean }>(`${API_BASE}/admin/ai-endpoints/${endpointId}`),
+  createModel: (endpointId: number, request: AiModelRequest) =>
+    api.post<AiModel>(`${API_BASE}/admin/ai-endpoints/${endpointId}/models`, request)
+};
+
+export const aiModelApi = {
+  update: (modelId: number, request: AiModelRequest) => api.put<AiModel>(`${API_BASE}/admin/ai-models/${modelId}`, request),
+  delete: (modelId: number) => api.delete<{ success: boolean }>(`${API_BASE}/admin/ai-models/${modelId}`)
 };

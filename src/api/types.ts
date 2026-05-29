@@ -174,3 +174,77 @@ export interface BackgroundParseStatus {
   batchSize: number;
   unparsedBooksCount: number;
 }
+
+export interface PersonalizationSettings {
+  timeZone: string;
+}
+
+export interface PersonalizationOverview {
+  settings: PersonalizationSettings;
+  providers: AiProvider[];
+}
+
+export interface TimeZoneUpdateRequest {
+  timeZone: string;
+}
+
+export interface AiProvider {
+  id: number;
+  name: string;
+  providerKind: string;
+  enabled: boolean;
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+  endpoints?: AiEndpoint[];
+}
+
+export interface AiEndpoint {
+  id: number;
+  providerId: number;
+  baseUrl: string;
+  apiKeySet: boolean;
+  maxConcurrency: number;
+  enabled: boolean;
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+  models?: AiModel[];
+}
+
+export interface AiModel {
+  id: number;
+  endpointId: number;
+  modelName: string;
+  displayName: string;
+  supportsTts: boolean;
+  supportsLlm: boolean;
+  enabled: boolean;
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiProviderRequest {
+  name: string;
+  providerKind: string;
+  enabled: boolean;
+  priority: number;
+}
+
+export interface AiEndpointRequest {
+  baseUrl: string;
+  apiKey?: string | null;
+  maxConcurrency: number;
+  enabled: boolean;
+  priority: number;
+}
+
+export interface AiModelRequest {
+  modelName: string;
+  displayName: string;
+  supportsTts: boolean;
+  supportsLlm: boolean;
+  enabled: boolean;
+  priority: number;
+}

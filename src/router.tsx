@@ -4,6 +4,7 @@ import { AdminBackgroundParsePage } from './admin/AdminBackgroundParsePage';
 import { AdminBooksPage } from './admin/AdminBooksPage';
 import { AdminDashboardPage } from './admin/AdminDashboardPage';
 import { AdminInviteTokensPage } from './admin/AdminInviteTokensPage';
+import { AdminPersonalizationPage } from './admin/AdminPersonalizationPage';
 import { AdminUsersPage } from './admin/AdminUsersPage';
 import { LoginPage } from './routes/LoginPage';
 import { ReaderPage } from './routes/ReaderPage';
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       { path: 'tags', element: <Navigate to="/admin/books?tab=tags" replace /> },
       { path: 'txt-rules', element: <Navigate to="/admin/books?tab=txt-rules" replace /> },
       { path: 'background-parse', element: <AdminBackgroundParsePage /> },
+      { path: 'personalization', element: <AdminPersonalizationPage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'invite-tokens', element: <AdminInviteTokensPage /> }
     ]

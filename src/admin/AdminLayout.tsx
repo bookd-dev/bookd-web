@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, ChartNoAxesColumn, LogOut, RefreshCw, Ticket, Users } from 'lucide-react';
+import { BookOpen, ChartNoAxesColumn, LogOut, RefreshCw, Settings, Ticket, Users } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/bookdApi';
 import type { User } from '../api/types';
@@ -10,6 +10,7 @@ const navItems = [
   { to: '/admin', labelKey: 'adminLayout.navHome', icon: ChartNoAxesColumn, end: true },
   { to: '/admin/books', labelKey: 'adminLayout.navBooks', icon: BookOpen },
   { to: '/admin/background-parse', labelKey: 'adminLayout.navBackgroundParse', icon: RefreshCw },
+  { to: '/admin/personalization', labelKey: 'adminLayout.navPersonalization', icon: Settings },
   { to: '/admin/users', labelKey: 'adminLayout.navUsers', icon: Users },
   { to: '/admin/invite-tokens', labelKey: 'adminLayout.navInviteTokens', icon: Ticket }
 ] satisfies Array<{ to: string; labelKey: I18nKey; icon: typeof BookOpen; end?: boolean }>;

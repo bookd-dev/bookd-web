@@ -37,7 +37,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -150,7 +151,8 @@ a {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -165,7 +167,8 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
@@ -393,6 +396,14 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
+.provider-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .dialog-actions {
   justify-content: flex-end;
 }
@@ -412,6 +423,65 @@ textarea:focus {
 
 .compact-form {
   align-items: center;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.switch-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.switch-field input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.16s ease;
+  flex: 0 0 auto;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.24);
+  transition: transform 0.16s ease;
+}
+
+.switch-field input:checked + .switch-track {
+  background: var(--primary);
+}
+
+.switch-field input:checked + .switch-track .switch-thumb {
+  transform: translateX(18px);
+}
+
+.switch-field input:focus-visible + .switch-track {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
 }
 
 .stats-grid {
@@ -508,6 +578,133 @@ textarea:focus {
   border-radius: 8px;
   display: grid;
   gap: 8px;
+}
+
+.ai-provider-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.ai-row-header,
+.ai-endpoint-row,
+.ai-model-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-row-text {
+  display: grid;
+  gap: 2px;
+}
+
+.ai-row-title {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.ai-row-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.ai-endpoint-list {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.ai-endpoint-row {
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 0 0;
+}
+
+.ai-endpoint-row + .ai-endpoint-row {
+  border-top: 1px solid var(--line);
+}
+
+.ai-endpoint-row > .rule-main {
+  flex: 1 1 460px;
+}
+
+.ai-model-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.ai-model-row {
+  min-height: 44px;
+  border-left: 2px solid var(--line);
+  padding: 8px 0 8px 12px;
+}
+
+.provider-editor {
+  display: grid;
+  gap: 18px;
+}
+
+.editor-section {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.editor-section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.editor-section-header,
+.editor-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.editor-section-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.editor-list {
+  display: grid;
+  gap: 12px;
+}
+
+.editor-list.compact {
+  gap: 10px;
+}
+
+.editor-item {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface);
+}
+
+.editor-nested-item {
+  display: grid;
+  gap: 12px;
+  border-left: 2px solid var(--line);
+  padding-left: 14px;
 }
 
 .book-line,
@@ -955,6 +1152,9 @@ textarea:focus {
   .admin-topbar,
   .section-header,
   .source-line,
+  .ai-row-header,
+  .ai-endpoint-row,
+  .ai-model-row,
   .list-row,
   .book-detail {
     align-items: stretch;

@@ -75,6 +75,7 @@ describe('localized rendering', () => {
 
     expect(screen.getByRole('heading', { name: 'Bookd Ebook Admin' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Books/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Personalization/ })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/admin · Administrator/)).toBeInTheDocument());
   });
 
