@@ -1,7 +1,7 @@
 # react-admin-personalization-settings Specification
 
 ## Purpose
-TBD - created by archiving change add-admin-personalization-ai-settings. Update Purpose after archive.
+Define React admin personalization, AI provider, TTS provider, and capability settings behavior.
 ## Requirements
 ### Requirement: React admin exposes personalization settings
 The React admin application SHALL provide a personalization settings route for administrators.
@@ -120,4 +120,3 @@ The React admin personalization page SHALL use the existing Web i18n system and 
 #### Scenario: Personalization UI changes
 - **WHEN** personalization navigation, forms, API client behavior, secret masking, or localized resources change
 - **THEN** Web tests SHALL cover representative rendering, API calls, validation, and resource key parity.
-
